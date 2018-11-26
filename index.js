@@ -11,7 +11,10 @@ const mongoose = require("mongoose");
 mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/todo");
 
 const TaskModel = mongoose.model("Task", {
-  title: String
+  title: String,
+  isDone: {
+    default: false
+  }
 });
 
 app.get("/", (req, res) => {
@@ -30,14 +33,41 @@ app.post("/create", (req, res) => {
   console.log(req.body);
   newTask.save((err, createdTask) => {
     if (err) {
-      res.json({ error: err.message });
+      res.status(400).json({ error: err.message });
     } else {
-      res.json(createdTask);
+      res.status(200).json(createdTask);
     }
   });
 });
 
-app.post("/update", (req, res) => {});
+app.post("/update", (req, res) => {
+  TaskModel.findById(req.body.id).exec((err, task) => {
+    if (err) {
+      return res.status(400).json({
+        error: err.message
+      });
+    }
+    task.isDone = !task.isDone;
+    task.save((err, updatedTask) => {
+      return res.json({ message: "La liste a été updatée" });
+    });
+  });
+});
+
+app.post("/delete", (req, res) => {
+  if (req.body.id) {
+    TaskModel.deleteOne({ _id: req.body.id }).exec((err, task) => {
+      if (err) {
+        return res.status(400).json({
+          error: err.message
+        });
+      }
+      return res.json({ message: "La tâche a été supprimée" });
+    });
+  } else {
+    return res.status(400).json({ error: err.message });
+  }
+});
 
 app.listen(process.env.PORT || 3000, () => {
   console.log("Server started");
