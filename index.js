@@ -1,5 +1,4 @@
 const express = require("express");
-const axios = require("axios");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 
@@ -8,13 +7,14 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const mongoose = require("mongoose");
-mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost:27017/todo");
+mongoose.connect(
+  process.env.MONGODB_URI || "mongodb://localhost:27017/todo",
+  { useNewUrlParser: true, useCreateIndex: true }
+);
 
 const TaskModel = mongoose.model("Task", {
   title: String,
-  isDone: {
-    default: false
-  }
+  isDone: false
 });
 
 app.get("/", (req, res) => {
@@ -47,10 +47,11 @@ app.post("/update", (req, res) => {
         error: err.message
       });
     }
-    task.isDone = !task.isDone;
-    task.save((err, updatedTask) => {
-      return res.json({ message: "La liste a été updatée" });
-    });
+    if (task.isDone === true) {
+      task.save((err, updatedTask) => {
+        return res.json({ message: "La liste a été updatée" });
+      });
+    }
   });
 });
 
