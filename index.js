@@ -14,11 +14,15 @@ mongoose.connect(
 
 const TaskModel = mongoose.model("Task", {
   title: String,
-  isDone: false
+  isDone: {
+    type: Boolean,
+    default: false
+  }
 });
 
 app.get("/", (req, res) => {
   TaskModel.find().exec((err, tasks) => {
+    /// .find() récupère toutes les taches
     if (err) {
       return res.status(400).json({
         error: err.message
@@ -29,7 +33,7 @@ app.get("/", (req, res) => {
 });
 
 app.post("/create", (req, res) => {
-  const newTask = new TaskModel(req.body);
+  const newTask = new TaskModel({ title: req.body.title });
   console.log(req.body);
   newTask.save((err, createdTask) => {
     if (err) {
@@ -47,11 +51,10 @@ app.post("/update", (req, res) => {
         error: err.message
       });
     }
-    if (task.isDone === true) {
-      task.save((err, updatedTask) => {
-        return res.json({ message: "La liste a été updatée" });
-      });
-    }
+    task.isDone = !task.isDone;
+    task.save((err, updatedTask) => {
+      return res.json({ message: "La liste a été updatée" });
+    });
   });
 });
 
